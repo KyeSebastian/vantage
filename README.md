@@ -6,17 +6,17 @@ Open `sample-report.html` in this repo to see real output without running anythi
 
 ## What it checks
 
-**Recon** scans the top 1000 ports using async TCP connects, grabs service banners, and guesses the OS from the ICMP TTL. It flags anything dangerous that is exposed publicly, things like Telnet, RDP, Redis without auth, the Docker API, and MongoDB, with severity ratings and remediation steps.
+**Recon** scans the top 1000 ports, grabs service banners, and fingerprints the OS via ICMP TTL. Flags high-risk services exposed to the internet with severity ratings and remediation steps.
 
-**Vulnerability Mapper** reads the service banners for software names and versions, then queries the NIST National Vulnerability Database for matching CVEs. If it cannot pull a version from the banner it skips that port because a versionless query returns thousands of results that mean nothing.
+**Vulnerability Mapper** parses banners for software versions and queries the NVD API for matching CVEs. Skips any port where no version can be identified.
 
-**TLS Inspector** connects to HTTPS ports and checks the certificate and cipher configuration. It flags expired or self-signed certs, deprecated protocol versions (TLS 1.0 and 1.1 have known real-world attacks, not just theoretical ones), and weak cipher suites like RC4 and DES.
+**TLS Inspector** checks certificate validity, protocol version, and cipher suite. Flags expired certs, TLS 1.0/1.1, and weak ciphers like RC4 and DES.
 
-**HTTP Headers** makes a GET request and checks the response against the headers that matter: Strict-Transport-Security, Content-Security-Policy, X-Frame-Options, X-Content-Type-Options, and Referrer-Policy. It also catches headers that leak server info because version strings in Server or X-Powered-By give attackers a starting point.
+**HTTP Headers** checks the response headers against the standard security set and flags anything leaking server version info.
 
-**DNS Analyzer** checks SPF, DMARC, DKIM, and whether any nameserver allows a full zone transfer. A missing DMARC record means spoofed emails from your domain land in inboxes with no enforcement. A zone transfer that succeeds gives an attacker your entire infrastructure map from one query. This module is skipped automatically on raw IPs.
+**DNS Analyzer** checks SPF, DMARC, DKIM, and zone transfer exposure. Skipped automatically on raw IPs.
 
-**Risk Scorer** aggregates all findings, applies a penalty model by severity, and outputs a host grade from A to F with a score out of 100. The report leads with the worst findings first.
+**Risk Scorer** aggregates findings across all modules, scores by severity, and outputs a host grade from A to F.
 
 ## Usage
 
