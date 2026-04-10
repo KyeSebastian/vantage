@@ -23,17 +23,17 @@ Open `sample-report.html` in this repo to see real output without running anythi
 ```bash
 pip install -r requirements.txt
 
-python vantage.py example.com
-python vantage.py example.com --ports 22,80,443
-python vantage.py example.com --ports 1-1024
-python vantage.py example.com --out results/scan.html
+python vantage.py scanme.nmap.org
+python vantage.py scanme.nmap.org --ports 22,80,443
+python vantage.py scanme.nmap.org --ports 1-1024
+python vantage.py scanme.nmap.org --out results/scan.html
 python vantage.py 192.168.1.1
 ```
 
 NVD API keys are free at nvd.nist.gov/developers/request-an-api-key and raise the rate limit from 5 to 50 requests per 30 seconds.
 
 ```bash
-python vantage.py example.com --nvd-key YOUR_KEY
+python vantage.py scanme.nmap.org --nvd-key YOUR_KEY
 ```
 
 ## Stack
