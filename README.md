@@ -43,16 +43,21 @@ Python 3.12, asyncio, httpx, dnspython, jinja2
 ## Structure
 
 ```
-vantage.py            entry point
-scanner/engine.py     orchestrates the three-phase scan
-scanner/target.py     parses and resolves the input
-modules/recon.py      port scan and service fingerprinting
-modules/vuln.py       NVD CVE lookup
-modules/tls.py        certificate and cipher inspection
-modules/headers.py    HTTP security header checks
-modules/dns.py        SPF, DMARC, DKIM, zone transfer
-modules/risk.py       scoring and grade calculation
-modules/report.py     HTML report renderer
-templates/            jinja2 report template
-tests/                unit tests for risk scorer and target parser
+vantage.py
+scanner/
+    engine.py       orchestrates the three-phase scan
+    target.py       parses and resolves the input
+modules/
+    recon.py        port scan and service fingerprinting
+    vuln.py         NVD CVE lookup
+    tls.py          certificate and cipher inspection
+    headers.py      HTTP security header checks
+    dns.py          SPF, DMARC, DKIM, zone transfer
+    risk.py         scoring and grade calculation
+    report.py       HTML report renderer
+templates/
+    report.html.j2  report template
+tests/
+    test_risk.py    risk scorer tests
+    test_target.py  input parser tests
 ```
