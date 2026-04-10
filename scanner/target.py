@@ -19,7 +19,7 @@ class Target:
             if value.lower().startswith(prefix):
                 value = value[len(prefix):]
         value = value.rstrip("/").split("/")[0]  # drop any path
-        # Strip port if present (e.g., "example.com:8080" → "example.com")
+        # Strip port if present
         if not value.startswith("[") and ":" in value:
             value = value.rsplit(":", 1)[0]
 

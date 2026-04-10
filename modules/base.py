@@ -8,7 +8,7 @@ SEVERITY_ORDER = {"critical": 0, "high": 1, "medium": 2, "low": 3, "info": 4}
 @dataclass
 class Finding:
     title: str
-    severity: str  # critical | high | medium | low | info
+    severity: str  # one of: critical, high, medium, low, info
     detail: str
     recommendation: str = ""
     module: str = ""

@@ -7,7 +7,7 @@ from .base import BaseAnalyzer, AnalysisResult, Finding
 
 NVD_API = "https://services.nvd.nist.gov/rest/json/cves/2.0"
 
-# (regex, vendor, product) — matched against service banners
+# each entry is (regex, vendor, product), matched against the banner grabbed from each open port
 BANNER_PATTERNS: list[tuple[str, str, str]] = [
     (r"OpenSSH[_\s]([\d.p]+)", "openssh", "openssh"),
     (r"Apache[/\s]([\d.]+)", "apache", "http_server"),
@@ -34,7 +34,7 @@ class VulnAnalyzer(BaseAnalyzer):
 
     def __init__(self, api_key: str | None, services: dict):
         self.api_key = api_key
-        # services: {port: {"service": str, "banner": str}}
+        # services is a dict of open ports to their service name and raw banner from recon
         self.services = services
 
     def _fingerprint_services(self) -> list[dict]:
@@ -121,7 +121,7 @@ class VulnAnalyzer(BaseAnalyzer):
                     ))
                 await asyncio.sleep(delay)
 
-        # Deduplicate by CVE ID
+        # same CVE can match multiple banners, only keep the first occurrence
         seen_ids: set[str] = set()
         deduped: list[Finding] = []
         for f in findings:
