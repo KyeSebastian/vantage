@@ -20,7 +20,7 @@ class DNSAnalyzer(BaseAnalyzer):
             )
 
         host = target.hostname
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         findings: list[Finding] = []
         data: dict = {}
 

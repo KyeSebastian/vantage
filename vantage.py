@@ -54,7 +54,7 @@ Examples:
         "--nvd-key",
         metavar="KEY",
         default=None,
-        help="NVD API key — increases CVE lookup rate limit (optional)",
+        help="NVD API key, increases the CVE lookup rate limit (optional)",
     )
     p.add_argument(
         "--out", "-o",

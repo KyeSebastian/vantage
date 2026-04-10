@@ -3,7 +3,7 @@
 import sys
 import os
 
-# Make sure imports resolve from project root
+# make sure imports resolve from project root
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import pytest
@@ -11,7 +11,7 @@ from modules.base import AnalysisResult, Finding
 from modules.risk import RiskScorer, _letter_grade, PENALTY, GRADE_SCALE
 
 
-# ── Helpers ───────────────────────────────────────────────────────────────────
+# helpers
 
 def make_result(module: str, findings: list[Finding], error: str = None) -> AnalysisResult:
     return AnalysisResult(module=module, target="example.com", findings=findings, error=error)
@@ -27,7 +27,7 @@ def make_finding(severity: str, module: str = "recon") -> Finding:
     )
 
 
-# ── Attack 1: Grade boundary off-by-one ──────────────────────────────────────
+# Attack 1 - grade boundary off-by-one
 
 class TestGradeBoundaries:
     """Each threshold value must land on exactly the right letter grade."""
@@ -63,7 +63,7 @@ class TestGradeBoundaries:
         assert _letter_grade(100) == "A"
 
 
-# ── Attack 2: Empty-string module triggers wrong fallback ─────────────────────
+# Attack 2 - empty module string triggers wrong fallback
 
 class TestModuleAttribution:
     """Findings with module='' (falsy) must still be attributed correctly."""
@@ -74,7 +74,7 @@ class TestModuleAttribution:
         scored = RiskScorer({"recon": result}).score()
         flat = scored.data["all_findings"]
         assert len(flat) == 1
-        # Must not be "unknown" — fallback should resolve to "recon"
+        # should not fall back to "unknown", the lookup should resolve it to "recon"
         assert flat[0]["module"] == "recon"
 
     def test_finding_with_explicit_module_is_not_overridden(self):
@@ -85,7 +85,7 @@ class TestModuleAttribution:
         assert flat[0]["module"] == "tls"
 
 
-# ── Attack 3: Score floor — must never go negative ────────────────────────────
+# Attack 3 - score floor, must never go negative
 
 class TestScoreFloor:
     """Penalty can exceed 100. Score must floor at 0, never go negative."""
@@ -116,7 +116,7 @@ class TestScoreFloor:
         assert scored.data["grade"] == "A"
 
 
-# ── Gap 1: Unknown severity scores 0 penalty but still appears in counts ──────
+# Gap 1 - unknown severity scores 0 penalty but still shows in counts
 
 class TestUnknownSeverity:
     """A finding with an unrecognized severity must not crash and must appear in counts."""
@@ -140,10 +140,10 @@ class TestUnknownSeverity:
         assert len(scored.data["all_findings"]) == 1
 
 
-# ── Gap 2: Empty results dict must not crash ──────────────────────────────────
+# Gap 2 - empty results dict must not crash
 
 class TestEmptyResults:
-    """Scorer receives no modules — must return a valid zero-finding result."""
+    """Scorer receives no modules, must return a valid zero-finding result."""
 
     def test_empty_results_does_not_crash(self):
         scored = RiskScorer({}).score()
@@ -156,7 +156,7 @@ class TestEmptyResults:
         assert scored.target == ""
 
 
-# ── Gap 3: Errored module contributes zero findings to score ──────────────────
+# Gap 3 - errored module should contribute zero findings to score
 
 class TestErroredModules:
     """A module that failed (error set, findings=[]) must not affect the score."""
@@ -175,7 +175,7 @@ class TestErroredModules:
         assert scored.data["score"] == 85  # 100 - 15
 
 
-# ── Gap A: Multi-module scoring must not double-count ─────────────────────────
+# Gap A - multi-module scoring must not double-count
 
 class TestMultiModuleScoring:
     """Findings from multiple modules must be aggregated, not duplicated."""
@@ -200,7 +200,7 @@ class TestMultiModuleScoring:
         assert scored.data["score"] == max(0, 100 - 30 - 15 - 7 - 2 - 0)
 
 
-# ── Gap B: all_findings must be sorted critical → info ───────────────────────
+# Gap B - all_findings must be sorted critical to info
 
 class TestFindingsSortOrder:
     """all_findings in the report must be sorted by severity, worst first."""
@@ -222,10 +222,10 @@ class TestFindingsSortOrder:
         assert severities == ["critical", "high", "medium", "low", "info"]
 
 
-# ── Gap C: counts dict must match total_findings ──────────────────────────────
+# Gap C - counts dict must match total_findings
 
 class TestCountsConsistency:
-    """Sum of counts by severity must equal total_findings — they drive the report summary cards."""
+    """Sum of counts by severity must equal total_findings, they drive the report summary cards."""
 
     def test_counts_sum_equals_total_findings(self):
         findings = [

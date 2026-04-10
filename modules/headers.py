@@ -2,7 +2,7 @@ import httpx
 
 from .base import BaseAnalyzer, AnalysisResult, Finding
 
-# Header name → (severity, title, detail, recommendation)
+# header name: (severity, title, detail, recommendation)
 REQUIRED_HEADERS: dict[str, tuple[str, str, str, str]] = {
     "strict-transport-security": (
         "medium",

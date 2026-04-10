@@ -73,7 +73,7 @@ class ScanEngine:
                 finding_count = len(dns_result.findings) if dns_result else 0
                 self._ok("DNS Analyzer", f"{finding_count} finding(s)")
         else:
-            self._skip("DNS Analyzer", "skipped — raw IP address")
+            self._skip("DNS Analyzer", "skipped (raw IP)")
 
         # phase 2 - tls, headers, vuln all run concurrently once we have the open port list
         phase2_coros = []

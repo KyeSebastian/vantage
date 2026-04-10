@@ -43,7 +43,7 @@ class TLSAnalyzer(BaseAnalyzer):
 
     async def analyze(self, target) -> AnalysisResult:
         host = target.hostname or target.ip
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         findings: list[Finding] = []
         data: dict = {}
 

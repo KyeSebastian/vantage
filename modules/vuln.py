@@ -72,7 +72,7 @@ class VulnAnalyzer(BaseAnalyzer):
                 if not cve_id:
                     continue
 
-                # Extract CVSS score — prefer v3.1, then v3.0, then v2
+                # pull CVSS score, prefer v3.1 then v3.0 then v2 as fallback
                 score, severity = None, "low"
                 metrics = cve.get("metrics", {})
                 for key in ("cvssMetricV31", "cvssMetricV30", "cvssMetricV2"):
