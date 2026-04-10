@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Virtual environments
+venv/
+env/
+.env
+
+# Pytest
+.pytest_cache/
+
+# Scan output — sample-report.html is committed intentionally, ignore the rest
+reports/*.html
+
+# Editor / OS
+.DS_Store
+Thumbs.db
+*.swp
+
+# Claude
+.claude/

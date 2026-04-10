@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vantage Report — {{ target.raw }}</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:       #0d1117;
+  --surface:  #161b22;
+  --border:   #30363d;
+  --text:     #e6edf3;
+  --muted:    #8b949e;
+  --accent:   #58a6ff;
+  --critical: #ff7b72;
+  --high:     #ffa657;
+  --medium:   #e3b341;
+  --low:      #79c0ff;
+  --info:     #8b949e;
+  --green:    #3fb950;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+.page { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+
+/* ── Header ─────────────────────────────────────────────────────────── */
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 2rem;
+}
+
+.header-left h1 {
+  font-size: 1.6rem;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+.header-left h1 span { color: var(--accent); }
+.header-meta { color: var(--muted); font-size: 0.85rem; margin-top: 0.3rem; }
+.header-meta strong { color: var(--text); }
+
+/* ── Grade circle ────────────────────────────────────────────────────── */
+.grade-wrap { text-align: center; flex-shrink: 0; }
+.grade-circle {
+  width: 80px; height: 80px;
+  border-radius: 50%;
+  border: 3px solid;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  margin: 0 auto 0.4rem;
+}
+.grade-letter { font-size: 2rem; font-weight: 800; line-height: 1; }
+.grade-label { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+.grade-score { font-size: 0.78rem; color: var(--muted); margin-top: 0.2rem; }
+
+/* ── Summary cards ───────────────────────────────────────────────────── */
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+}
+.sev-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem 0.75rem;
+  text-align: center;
+}
+.sev-card .count { font-size: 1.8rem; font-weight: 700; line-height: 1; }
+.sev-card .label { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 0.25rem; }
+.sev-card.critical .count { color: var(--critical); }
+.sev-card.high     .count { color: var(--high); }
+.sev-card.medium   .count { color: var(--medium); }
+.sev-card.low      .count { color: var(--low); }
+.sev-card.info     .count { color: var(--info); }
+
+/* ── Sections ────────────────────────────────────────────────────────── */
+.section { margin-bottom: 2.5rem; }
+.section-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 1rem;
+}
+.section-title span { color: var(--text); }
+
+/* ── Findings list ───────────────────────────────────────────────────── */
+.finding {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid;
+  border-radius: 6px;
+  padding: 0.85rem 1rem;
+  margin-bottom: 0.6rem;
+}
+.finding.critical { border-left-color: var(--critical); }
+.finding.high     { border-left-color: var(--high); }
+.finding.medium   { border-left-color: var(--medium); }
+.finding.low      { border-left-color: var(--low); }
+.finding.info     { border-left-color: var(--info); }
+
+.finding-header { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.3rem; }
+.finding-title  { font-weight: 600; font-size: 0.92rem; }
+
+.badge {
+  display: inline-block;
+  padding: 0.1rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.badge.critical { background: rgba(255,123,114,.15); color: var(--critical); }
+.badge.high     { background: rgba(255,166,87,.15);  color: var(--high); }
+.badge.medium   { background: rgba(227,179,65,.15);  color: var(--medium); }
+.badge.low      { background: rgba(121,192,255,.15); color: var(--low); }
+.badge.info     { background: rgba(139,148,158,.15); color: var(--info); }
+
+.badge-module {
+  background: rgba(88,166,255,.1);
+  color: var(--accent);
+  padding: 0.1rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.68rem;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
+
+.finding-detail { color: var(--muted); font-size: 0.85rem; margin-bottom: 0.3rem; }
+.finding-rec    { font-size: 0.82rem; }
+.finding-rec::before { content: "↳ "; color: var(--green); }
+
+/* ── Info tables ─────────────────────────────────────────────────────── */
+.info-table { width: 100%; border-collapse: collapse; }
+.info-table td {
+  padding: 0.45rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.info-table td:first-child {
+  color: var(--muted);
+  white-space: nowrap;
+  width: 30%;
+  font-size: 0.83rem;
+}
+.info-table tr:last-child td { border-bottom: none; }
+
+/* ── Port table ──────────────────────────────────────────────────────── */
+.port-table { width: 100%; border-collapse: collapse; }
+.port-table th {
+  text-align: left;
+  padding: 0.4rem 0.75rem;
+  color: var(--muted);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--border);
+}
+.port-table td {
+  padding: 0.4rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.85rem;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+}
+.port-table tr:last-child td { border-bottom: none; }
+.port-table tr:hover td { background: rgba(255,255,255,.02); }
+
+.pill {
+  display: inline-block;
+  background: rgba(88,166,255,.1);
+  color: var(--accent);
+  border-radius: 4px;
+  padding: 0 0.4rem;
+  font-size: 0.75rem;
+}
+
+.ok    { color: var(--green); }
+.warn  { color: var(--medium); }
+.bad   { color: var(--critical); }
+.muted { color: var(--muted); }
+.mono  { font-family: "SFMono-Regular", Consolas, monospace; font-size: 0.83rem; }
+
+/* ── No-findings ─────────────────────────────────────────────────────── */
+.no-findings {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  color: var(--green);
+  font-size: 0.85rem;
+}
+
+/* ── Footer ──────────────────────────────────────────────────────────── */
+.footer {
+  border-top: 1px solid var(--border);
+  padding-top: 1rem;
+  color: var(--muted);
+  font-size: 0.78rem;
+  text-align: center;
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ── Header ───────────────────────────────────────────────────────── -->
+  <div class="header">
+    <div class="header-left">
+      <h1>Vantage / <span>{{ target.raw }}</span></h1>
+      <div class="header-meta">
+        <strong>IP:</strong> {{ target.ip }}
+        {% if target.hostname %} &nbsp;·&nbsp; <strong>Host:</strong> {{ target.hostname }}{% endif %}
+        &nbsp;·&nbsp; Generated {{ generated_at }}
+      </div>
+    </div>
+
+    {% if risk %}
+    <div class="grade-wrap">
+      <div class="grade-circle" style="border-color:{{ risk.data.grade_color }};color:{{ risk.data.grade_color }}">
+        <span class="grade-letter">{{ risk.data.grade }}</span>
+      </div>
+      <div class="grade-score">{{ risk.data.score }}/100</div>
+      <div class="grade-label">Security Score</div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- ── Summary cards ────────────────────────────────────────────────── -->
+  {% if risk %}
+  {% set counts = risk.data.counts %}
+  <div class="summary-grid">
+    <div class="sev-card critical">
+      <div class="count">{{ counts.get("critical", 0) }}</div>
+      <div class="label">Critical</div>
+    </div>
+    <div class="sev-card high">
+      <div class="count">{{ counts.get("high", 0) }}</div>
+      <div class="label">High</div>
+    </div>
+    <div class="sev-card medium">
+      <div class="count">{{ counts.get("medium", 0) }}</div>
+      <div class="label">Medium</div>
+    </div>
+    <div class="sev-card low">
+      <div class="count">{{ counts.get("low", 0) }}</div>
+      <div class="label">Low</div>
+    </div>
+    <div class="sev-card info">
+      <div class="count">{{ counts.get("info", 0) }}</div>
+      <div class="label">Info</div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- ── All findings (sorted by severity) ────────────────────────────── -->
+  {% if risk and risk.data.all_findings %}
+  <div class="section">
+    <div class="section-title">All Findings — <span>{{ risk.data.total_findings }} total</span></div>
+
+    {% for f in risk.data.all_findings %}
+    <div class="finding {{ f.severity }}">
+      <div class="finding-header">
+        <span class="badge {{ f.severity }}">{{ f.severity }}</span>
+        <span class="badge-module">{{ f.module }}</span>
+        <span class="finding-title">{{ f.title }}</span>
+      </div>
+      <div class="finding-detail">{{ f.detail }}</div>
+      {% if f.recommendation %}
+      <div class="finding-rec">{{ f.recommendation }}</div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- ── Recon ─────────────────────────────────────────────────────────── -->
+  {% if recon %}
+  <div class="section">
+    <div class="section-title">Recon — <span>Port Scan &amp; OS Fingerprint</span></div>
+
+    <table class="info-table" style="margin-bottom:1rem">
+      <tr>
+        <td>Open ports</td>
+        <td>{{ recon.data.get("port_count", 0) }}</td>
+      </tr>
+      <tr>
+        <td>OS guess (TTL)</td>
+        <td>{{ recon.data.get("os_guess", "Unknown") }}</td>
+      </tr>
+      {% if recon.error %}
+      <tr><td>Error</td><td class="warn">{{ recon.error }}</td></tr>
+      {% endif %}
+    </table>
+
+    {% if recon.data.open_ports %}
+    <table class="port-table">
+      <thead>
+        <tr>
+          <th>Port</th>
+          <th>Service</th>
+          <th>Banner</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for port, info in recon.data.open_ports.items() | sort %}
+        <tr>
+          <td>{{ port }}/tcp</td>
+          <td><span class="pill">{{ info.service }}</span></td>
+          <td class="muted">{{ info.banner[:100] if info.banner else "—" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <!-- ── TLS ───────────────────────────────────────────────────────────── -->
+  {% if tls %}
+  <div class="section">
+    <div class="section-title">TLS Inspector</div>
+    {% if tls.error and not tls.data %}
+    <div class="no-findings warn">{{ tls.error }}</div>
+    {% else %}
+    <table class="info-table">
+      {% if tls.data.get("subject") %}
+      <tr>
+        <td>Subject CN</td>
+        <td>{{ tls.data.subject.get("commonName", "—") }}</td>
+      </tr>
+      <tr>
+        <td>Issuer</td>
+        <td>{{ tls.data.issuer.get("organizationName", "—") }}</td>
+      </tr>
+      {% endif %}
+      {% if tls.data.get("not_after") %}
+      <tr>
+        <td>Expires</td>
+        <td class="{% if tls.data.get('days_until_expiry', 999) < 30 %}warn{% else %}ok{% endif %}">
+          {{ tls.data.not_after }}
+          {% if tls.data.get("days_until_expiry") is not none %}
+            ({{ tls.data.days_until_expiry }} days)
+          {% endif %}
+        </td>
+      </tr>
+      {% endif %}
+      {% if tls.data.get("protocol") %}
+      <tr>
+        <td>Protocol</td>
+        <td>{{ tls.data.protocol }}</td>
+      </tr>
+      {% endif %}
+      {% if tls.data.get("cipher_name") %}
+      <tr>
+        <td>Cipher</td>
+        <td class="mono">{{ tls.data.cipher_name }} ({{ tls.data.get("cipher_bits", "?") }} bit)</td>
+      </tr>
+      {% endif %}
+      {% if tls.data.get("san") %}
+      <tr>
+        <td>SANs</td>
+        <td class="muted mono">{{ tls.data.san | join(", ") | truncate(120) }}</td>
+      </tr>
+      {% endif %}
+      {% if tls.error %}
+      <tr><td>Note</td><td class="warn">{{ tls.error }}</td></tr>
+      {% endif %}
+    </table>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <!-- ── HTTP Headers ───────────────────────────────────────────────────── -->
+  {% if headers %}
+  <div class="section">
+    <div class="section-title">HTTP Headers</div>
+    <table class="info-table" style="margin-bottom:1rem">
+      {% if headers.data.get("url") %}
+      <tr>
+        <td>Final URL</td>
+        <td><a href="{{ headers.data.url }}">{{ headers.data.url }}</a></td>
+      </tr>
+      {% endif %}
+      {% if headers.data.get("status_code") %}
+      <tr>
+        <td>Status</td>
+        <td>{{ headers.data.status_code }}</td>
+      </tr>
+      {% endif %}
+    </table>
+
+    {% if not headers.findings %}
+    <div class="no-findings">✓ All checked security headers are present.</div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <!-- ── DNS ────────────────────────────────────────────────────────────── -->
+  {% if dns %}
+  <div class="section">
+    <div class="section-title">DNS Analyzer — <span>SPF / DMARC / DKIM / Zone Transfer</span></div>
+
+    {% if dns.error %}
+    <div class="no-findings muted">{{ dns.error }}</div>
+    {% else %}
+    <table class="info-table">
+      {% if dns.data.get("spf") %}
+      <tr>
+        <td>SPF</td>
+        <td class="mono">
+          {% if dns.data.spf.get("record") %}
+            <span class="ok">{{ dns.data.spf.record }}</span>
+          {% else %}
+            <span class="bad">Not found</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endif %}
+      {% if dns.data.get("dmarc") %}
+      <tr>
+        <td>DMARC</td>
+        <td class="mono">
+          {% if dns.data.dmarc.get("record") %}
+            <span class="ok">{{ dns.data.dmarc.record }}</span>
+          {% else %}
+            <span class="bad">Not found</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endif %}
+      {% if dns.data.get("dkim") %}
+      <tr>
+        <td>DKIM selectors</td>
+        <td>
+          {% if dns.data.dkim.get("found_selectors") %}
+            {% for s in dns.data.dkim.found_selectors %}
+              <span class="pill ok">{{ s.selector }}</span>
+            {% endfor %}
+          {% else %}
+            <span class="bad">None found</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endif %}
+      {% if dns.data.get("zone_transfer") %}
+      <tr>
+        <td>Zone Transfer (AXFR)</td>
+        <td>
+          {% if dns.data.zone_transfer.vulnerable_ns %}
+            <span class="bad">Allowed by {{ dns.data.zone_transfer.vulnerable_ns | length }} nameserver(s)</span>
+          {% else %}
+            <span class="ok">Blocked on all nameservers</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endif %}
+    </table>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <!-- ── CVE / Vuln ─────────────────────────────────────────────────────── -->
+  {% if vuln %}
+  <div class="section">
+    <div class="section-title">Vulnerability Mapper — <span>NVD CVE Lookup</span></div>
+
+    {% if vuln.data.get("note") %}
+    <div class="no-findings muted">{{ vuln.data.note }}</div>
+    {% elif vuln.data.get("software") %}
+    <table class="info-table" style="margin-bottom:1rem">
+      <tr>
+        <td>Fingerprinted</td>
+        <td>
+          {% for sw in vuln.data.software %}
+            <span class="pill">{{ sw.vendor }} {{ sw.product }} {{ sw.version }}</span>
+          {% endfor %}
+        </td>
+      </tr>
+      <tr>
+        <td>CVEs matched</td>
+        <td>{{ vuln.data.cves | length }}</td>
+      </tr>
+    </table>
+
+    {% if not vuln.findings %}
+    <div class="no-findings">✓ No CVEs matched in NVD for detected software versions.</div>
+    {% endif %}
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <!-- ── Footer ─────────────────────────────────────────────────────────── -->
+  <div class="footer">
+    Generated by <strong>Vantage</strong> &nbsp;·&nbsp; {{ generated_at }}
+    &nbsp;·&nbsp; For authorized security assessments only.
+  </div>
+
+</div>
+</body>
+</html>

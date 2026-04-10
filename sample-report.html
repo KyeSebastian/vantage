@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vantage Report — scanme.nmap.org</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:       #0d1117;
+  --surface:  #161b22;
+  --border:   #30363d;
+  --text:     #e6edf3;
+  --muted:    #8b949e;
+  --accent:   #58a6ff;
+  --critical: #ff7b72;
+  --high:     #ffa657;
+  --medium:   #e3b341;
+  --low:      #79c0ff;
+  --info:     #8b949e;
+  --green:    #3fb950;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+.page { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+
+/* ── Header ─────────────────────────────────────────────────────────── */
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 2rem;
+}
+
+.header-left h1 {
+  font-size: 1.6rem;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+.header-left h1 span { color: var(--accent); }
+.header-meta { color: var(--muted); font-size: 0.85rem; margin-top: 0.3rem; }
+.header-meta strong { color: var(--text); }
+
+/* ── Grade circle ────────────────────────────────────────────────────── */
+.grade-wrap { text-align: center; flex-shrink: 0; }
+.grade-circle {
+  width: 80px; height: 80px;
+  border-radius: 50%;
+  border: 3px solid;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  margin: 0 auto 0.4rem;
+}
+.grade-letter { font-size: 2rem; font-weight: 800; line-height: 1; }
+.grade-label { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+.grade-score { font-size: 0.78rem; color: var(--muted); margin-top: 0.2rem; }
+
+/* ── Summary cards ───────────────────────────────────────────────────── */
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+}
+.sev-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem 0.75rem;
+  text-align: center;
+}
+.sev-card .count { font-size: 1.8rem; font-weight: 700; line-height: 1; }
+.sev-card .label { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 0.25rem; }
+.sev-card.critical .count { color: var(--critical); }
+.sev-card.high     .count { color: var(--high); }
+.sev-card.medium   .count { color: var(--medium); }
+.sev-card.low      .count { color: var(--low); }
+.sev-card.info     .count { color: var(--info); }
+
+/* ── Sections ────────────────────────────────────────────────────────── */
+.section { margin-bottom: 2.5rem; }
+.section-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 1rem;
+}
+.section-title span { color: var(--text); }
+
+/* ── Findings list ───────────────────────────────────────────────────── */
+.finding {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid;
+  border-radius: 6px;
+  padding: 0.85rem 1rem;
+  margin-bottom: 0.6rem;
+}
+.finding.critical { border-left-color: var(--critical); }
+.finding.high     { border-left-color: var(--high); }
+.finding.medium   { border-left-color: var(--medium); }
+.finding.low      { border-left-color: var(--low); }
+.finding.info     { border-left-color: var(--info); }
+
+.finding-header { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.3rem; }
+.finding-title  { font-weight: 600; font-size: 0.92rem; }
+
+.badge {
+  display: inline-block;
+  padding: 0.1rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.badge.critical { background: rgba(255,123,114,.15); color: var(--critical); }
+.badge.high     { background: rgba(255,166,87,.15);  color: var(--high); }
+.badge.medium   { background: rgba(227,179,65,.15);  color: var(--medium); }
+.badge.low      { background: rgba(121,192,255,.15); color: var(--low); }
+.badge.info     { background: rgba(139,148,158,.15); color: var(--info); }
+
+.badge-module {
+  background: rgba(88,166,255,.1);
+  color: var(--accent);
+  padding: 0.1rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.68rem;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
+
+.finding-detail { color: var(--muted); font-size: 0.85rem; margin-bottom: 0.3rem; }
+.finding-rec    { font-size: 0.82rem; }
+.finding-rec::before { content: "↳ "; color: var(--green); }
+
+/* ── Info tables ─────────────────────────────────────────────────────── */
+.info-table { width: 100%; border-collapse: collapse; }
+.info-table td {
+  padding: 0.45rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.info-table td:first-child {
+  color: var(--muted);
+  white-space: nowrap;
+  width: 30%;
+  font-size: 0.83rem;
+}
+.info-table tr:last-child td { border-bottom: none; }
+
+/* ── Port table ──────────────────────────────────────────────────────── */
+.port-table { width: 100%; border-collapse: collapse; }
+.port-table th {
+  text-align: left;
+  padding: 0.4rem 0.75rem;
+  color: var(--muted);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--border);
+}
+.port-table td {
+  padding: 0.4rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.85rem;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+}
+.port-table tr:last-child td { border-bottom: none; }
+.port-table tr:hover td { background: rgba(255,255,255,.02); }
+
+.pill {
+  display: inline-block;
+  background: rgba(88,166,255,.1);
+  color: var(--accent);
+  border-radius: 4px;
+  padding: 0 0.4rem;
+  font-size: 0.75rem;
+}
+
+.ok    { color: var(--green); }
+.warn  { color: var(--medium); }
+.bad   { color: var(--critical); }
+.muted { color: var(--muted); }
+.mono  { font-family: "SFMono-Regular", Consolas, monospace; font-size: 0.83rem; }
+
+/* ── No-findings ─────────────────────────────────────────────────────── */
+.no-findings {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  color: var(--green);
+  font-size: 0.85rem;
+}
+
+/* ── Footer ──────────────────────────────────────────────────────────── */
+.footer {
+  border-top: 1px solid var(--border);
+  padding-top: 1rem;
+  color: var(--muted);
+  font-size: 0.78rem;
+  text-align: center;
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ── Header ───────────────────────────────────────────────────────── -->
+  <div class="header">
+    <div class="header-left">
+      <h1>Vantage / <span>scanme.nmap.org</span></h1>
+      <div class="header-meta">
+        <strong>IP:</strong> 45.33.32.156
+         &nbsp;·&nbsp; <strong>Host:</strong> scanme.nmap.org
+        &nbsp;·&nbsp; Generated 2026-04-10 03:04 UTC
+      </div>
+    </div>
+
+    
+    <div class="grade-wrap">
+      <div class="grade-circle" style="border-color:#f97316;color:#f97316">
+        <span class="grade-letter">D</span>
+      </div>
+      <div class="grade-score">44/100</div>
+      <div class="grade-label">Security Score</div>
+    </div>
+    
+  </div>
+
+  <!-- ── Summary cards ────────────────────────────────────────────────── -->
+  
+  
+  <div class="summary-grid">
+    <div class="sev-card critical">
+      <div class="count">0</div>
+      <div class="label">Critical</div>
+    </div>
+    <div class="sev-card high">
+      <div class="count">1</div>
+      <div class="label">High</div>
+    </div>
+    <div class="sev-card medium">
+      <div class="count">5</div>
+      <div class="label">Medium</div>
+    </div>
+    <div class="sev-card low">
+      <div class="count">3</div>
+      <div class="label">Low</div>
+    </div>
+    <div class="sev-card info">
+      <div class="count">1</div>
+      <div class="label">Info</div>
+    </div>
+  </div>
+  
+
+  <!-- ── All findings (sorted by severity) ────────────────────────────── -->
+  
+  <div class="section">
+    <div class="section-title">All Findings — <span>10 total</span></div>
+
+    
+    <div class="finding high">
+      <div class="finding-header">
+        <span class="badge high">high</span>
+        <span class="badge-module">dns</span>
+        <span class="finding-title">No DMARC record found</span>
+      </div>
+      <div class="finding-detail">_dmarc DNS record does not exist for this domain.</div>
+      
+      <div class="finding-rec">Publish a DMARC policy at _dmarc.yourdomain.com.</div>
+      
+    </div>
+    
+    <div class="finding medium">
+      <div class="finding-header">
+        <span class="badge medium">medium</span>
+        <span class="badge-module">dns</span>
+        <span class="finding-title">No DKIM records found (common selectors checked)</span>
+      </div>
+      <div class="finding-detail">Checked selectors: default, google, selector1, selector2, mail, dkim, k1, smtp. None returned a valid DKIM1 record.</div>
+      
+      <div class="finding-rec">Configure DKIM signing in your mail provider and publish the public key TXT record.</div>
+      
+    </div>
+    
+    <div class="finding medium">
+      <div class="finding-header">
+        <span class="badge medium">medium</span>
+        <span class="badge-module">headers</span>
+        <span class="finding-title">Missing Strict-Transport-Security (HSTS)</span>
+      </div>
+      <div class="finding-detail">Browsers may connect over insecure HTTP; HSTS is not enforced.</div>
+      
+      <div class="finding-rec">Add: Strict-Transport-Security: max-age=31536000; includeSubDomains; preload</div>
+      
+    </div>
+    
+    <div class="finding medium">
+      <div class="finding-header">
+        <span class="badge medium">medium</span>
+        <span class="badge-module">headers</span>
+        <span class="finding-title">Missing X-Frame-Options</span>
+      </div>
+      <div class="finding-detail">Pages can be embedded in iframes, enabling clickjacking attacks.</div>
+      
+      <div class="finding-rec">Add: X-Frame-Options: DENY  (or SAMEORIGIN if embedding is required internally)</div>
+      
+    </div>
+    
+    <div class="finding medium">
+      <div class="finding-header">
+        <span class="badge medium">medium</span>
+        <span class="badge-module">headers</span>
+        <span class="finding-title">Missing Content-Security-Policy (CSP)</span>
+      </div>
+      <div class="finding-detail">No CSP defined. XSS attacks have maximum impact without a restrictive policy.</div>
+      
+      <div class="finding-rec">Define a strict CSP suited to your application. Start with default-src 'self'.</div>
+      
+    </div>
+    
+    <div class="finding medium">
+      <div class="finding-header">
+        <span class="badge medium">medium</span>
+        <span class="badge-module">headers</span>
+        <span class="finding-title">Site served over HTTP without redirect to HTTPS</span>
+      </div>
+      <div class="finding-detail">The server responded to an HTTP request without redirecting to HTTPS.</div>
+      
+      <div class="finding-rec">Configure a permanent 301 redirect from HTTP to HTTPS.</div>
+      
+    </div>
+    
+    <div class="finding low">
+      <div class="finding-header">
+        <span class="badge low">low</span>
+        <span class="badge-module">headers</span>
+        <span class="finding-title">Missing X-Content-Type-Options</span>
+      </div>
+      <div class="finding-detail">Browsers may MIME-sniff responses, enabling content-type confusion attacks.</div>
+      
+      <div class="finding-rec">Add: X-Content-Type-Options: nosniff</div>
+      
+    </div>
+    
+    <div class="finding low">
+      <div class="finding-header">
+        <span class="badge low">low</span>
+        <span class="badge-module">headers</span>
+        <span class="finding-title">Missing Referrer-Policy</span>
+      </div>
+      <div class="finding-detail">Referrer information may leak to third-party origins.</div>
+      
+      <div class="finding-rec">Add: Referrer-Policy: strict-origin-when-cross-origin</div>
+      
+    </div>
+    
+    <div class="finding low">
+      <div class="finding-header">
+        <span class="badge low">low</span>
+        <span class="badge-module">headers</span>
+        <span class="finding-title">Server information disclosed via 'server' header</span>
+      </div>
+      <div class="finding-detail">Value: 'Apache/2.4.7 (Ubuntu)'. Exposes server software and version, aiding targeted exploitation.</div>
+      
+      <div class="finding-rec">Remove or suppress the 'server' header in your server/proxy config.</div>
+      
+    </div>
+    
+    <div class="finding info">
+      <div class="finding-header">
+        <span class="badge info">info</span>
+        <span class="badge-module">headers</span>
+        <span class="finding-title">Missing Permissions-Policy</span>
+      </div>
+      <div class="finding-detail">Browser features (camera, microphone, geolocation) are unrestricted.</div>
+      
+      <div class="finding-rec">Add a Permissions-Policy header to disable features your app does not use.</div>
+      
+    </div>
+    
+  </div>
+  
+
+  <!-- ── Recon ─────────────────────────────────────────────────────────── -->
+  
+  <div class="section">
+    <div class="section-title">Recon — <span>Port Scan &amp; OS Fingerprint</span></div>
+
+    <table class="info-table" style="margin-bottom:1rem">
+      <tr>
+        <td>Open ports</td>
+        <td>2</td>
+      </tr>
+      <tr>
+        <td>OS guess (TTL)</td>
+        <td>Linux / Unix</td>
+      </tr>
+      
+    </table>
+
+    
+    <table class="port-table">
+      <thead>
+        <tr>
+          <th>Port</th>
+          <th>Service</th>
+          <th>Banner</th>
+        </tr>
+      </thead>
+      <tbody>
+        
+        <tr>
+          <td>22/tcp</td>
+          <td><span class="pill">SSH</span></td>
+          <td class="muted">SSH-2.0-OpenSSH_6.6.1p1 Ubuntu-2ubuntu2.13</td>
+        </tr>
+        
+        <tr>
+          <td>80/tcp</td>
+          <td><span class="pill">HTTP</span></td>
+          <td class="muted">—</td>
+        </tr>
+        
+      </tbody>
+    </table>
+    
+  </div>
+  
+
+  <!-- ── TLS ───────────────────────────────────────────────────────────── -->
+  
+
+  <!-- ── HTTP Headers ───────────────────────────────────────────────────── -->
+  
+  <div class="section">
+    <div class="section-title">HTTP Headers</div>
+    <table class="info-table" style="margin-bottom:1rem">
+      
+      <tr>
+        <td>Final URL</td>
+        <td><a href="http://scanme.nmap.org/">http://scanme.nmap.org/</a></td>
+      </tr>
+      
+      
+      <tr>
+        <td>Status</td>
+        <td>200</td>
+      </tr>
+      
+    </table>
+
+    
+  </div>
+  
+
+  <!-- ── DNS ────────────────────────────────────────────────────────────── -->
+  
+  <div class="section">
+    <div class="section-title">DNS Analyzer — <span>SPF / DMARC / DKIM / Zone Transfer</span></div>
+
+    
+    <table class="info-table">
+      
+      <tr>
+        <td>SPF</td>
+        <td class="mono">
+          
+            <span class="bad">Not found</span>
+          
+        </td>
+      </tr>
+      
+      
+      <tr>
+        <td>DMARC</td>
+        <td class="mono">
+          
+            <span class="bad">Not found</span>
+          
+        </td>
+      </tr>
+      
+      
+      <tr>
+        <td>DKIM selectors</td>
+        <td>
+          
+            <span class="bad">None found</span>
+          
+        </td>
+      </tr>
+      
+      
+      <tr>
+        <td>Zone Transfer (AXFR)</td>
+        <td>
+          
+            <span class="ok">Blocked on all nameservers</span>
+          
+        </td>
+      </tr>
+      
+    </table>
+    
+  </div>
+  
+
+  <!-- ── CVE / Vuln ─────────────────────────────────────────────────────── -->
+  
+  <div class="section">
+    <div class="section-title">Vulnerability Mapper — <span>NVD CVE Lookup</span></div>
+
+    
+    <table class="info-table" style="margin-bottom:1rem">
+      <tr>
+        <td>Fingerprinted</td>
+        <td>
+          
+            <span class="pill">openssh openssh 6.6.1p1</span>
+          
+        </td>
+      </tr>
+      <tr>
+        <td>CVEs matched</td>
+        <td>0</td>
+      </tr>
+    </table>
+
+    
+    <div class="no-findings">✓ No CVEs matched in NVD for detected software versions.</div>
+    
+    
+  </div>
+  
+
+  <!-- ── Footer ─────────────────────────────────────────────────────────── -->
+  <div class="footer">
+    Generated by <strong>Vantage</strong> &nbsp;·&nbsp; 2026-04-10 03:04 UTC
+    &nbsp;·&nbsp; For authorized security assessments only.
+  </div>
+
+</div>
+</body>
+</html>
