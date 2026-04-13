@@ -2,6 +2,8 @@
 
 A command line security assessment tool written in Python. Point it at a domain or IP, it runs six checks concurrently and outputs a self-contained HTML report with a security grade and prioritized list of findings.
 
+![Vantage composite](docs/vantage.png)
+
 Open `sample-report.html` in this repo to see real output without running anything. It is a scan of `scanme.nmap.org`, a host maintained by the Nmap project for exactly this purpose. It is intentionally misconfigured.
 
 ## What it checks
@@ -35,6 +37,16 @@ NVD API keys are free at nvd.nist.gov/developers/request-an-api-key and raise th
 ```bash
 python vantage.py scanme.nmap.org --nvd-key YOUR_KEY
 ```
+
+## Output
+
+**Terminal**
+
+![CLI output](docs/cli.png)
+
+**HTML Report**
+
+![HTML report](docs/report.png)
 
 ## Stack
 

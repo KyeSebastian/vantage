@@ -83,9 +83,8 @@ async def main() -> None:
     args = _build_parser().parse_args()
 
     print()
-    print("  +----------------------------------+")
-    print("  |   Vantage - Security Assessment  |")
-    print("  +----------------------------------+")
+    print("  Vantage - Security Assessment")
+    print()
     print(f"  Target  : {args.target}")
     print(f"  Ports   : {args.ports}")
     print(f"  NVD API : {'keyed (higher rate limit)' if args.nvd_key else 'anonymous (rate limited)'}")
