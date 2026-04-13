@@ -14,7 +14,9 @@ env/
 .pytest_cache/
 
 # Scan output — sample-report.html is committed intentionally, ignore the rest
-reports/*.html
+reports/
+vantage.png
+make_portfolio.py
 
 # Editor / OS
 .DS_Store
